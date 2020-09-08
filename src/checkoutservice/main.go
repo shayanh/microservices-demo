@@ -33,6 +33,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	contracts "github.com/shayanh/grpc-go-contracts"
+
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/genproto"
 	money "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/money"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -68,7 +70,7 @@ type checkoutService struct {
 	paymentSvcAddr        string
 }
 
-var serverContract *ServerContract
+var serverContract *contracts.ServerContract
 
 func main() {
 	if os.Getenv("DISABLE_TRACING") == "" {
@@ -105,16 +107,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rpcContract := &UnaryRPCContract{
+	rpcContract := &contracts.UnaryRPCContract{
 		Method: pb.CheckoutServiceServer.PlaceOrder,
-		PreConditions: []Condition{
+		PreConditions: []contracts.Condition{
 			func(req *pb.PlaceOrderRequest) error {
 				log.Info("[PRE] req = ", req)
 				return nil
 			},
 		},
-		PostConditions: []Condition{
-			func(resp *pb.PlaceOrderResponse, respErr error, req *pb.PlaceOrderRequest, calls RPCCallHistory) error {
+		PostConditions: []contracts.Condition{
+			func(resp *pb.PlaceOrderResponse, respErr error, req *pb.PlaceOrderRequest, calls contracts.RPCCallHistory) error {
 				log.Info("[POST] resp = ", resp, "respErr = ", respErr, " req = ", req)
 				log.Info("All()")
 				for _, call := range calls.All() {
@@ -129,7 +131,7 @@ func main() {
 		},
 	}
 
-	serverContract = NewServerContract(log)
+	serverContract = contracts.NewServerContract(log)
 	serverContract.RegisterUnaryRPCContract(rpcContract)
 
 	var srv *grpc.Server
