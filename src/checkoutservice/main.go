@@ -68,7 +68,7 @@ type checkoutService struct {
 	paymentSvcAddr        string
 }
 
-var serverContract ServerContract
+var serverContract *ServerContract
 
 func main() {
 	if os.Getenv("DISABLE_TRACING") == "" {
@@ -105,26 +105,32 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rpcContract := UnaryRPCContract{
+	rpcContract := &UnaryRPCContract{
 		Method: pb.CheckoutServiceServer.PlaceOrder,
 		PreConditions: []Condition{
 			func(req *pb.PlaceOrderRequest) error {
-				log.Info("I'm a precondition")
+				log.Info("[PRE] req = ", req)
 				return nil
 			},
 		},
 		PostConditions: []Condition{
-			func(resp *pb.PlaceOrderResponse) error {
-				log.Info("I'm a postcondition")
+			func(resp *pb.PlaceOrderResponse, respErr error, req *pb.PlaceOrderRequest, calls RPCCallHistory) error {
+				log.Info("[POST] resp = ", resp, "respErr = ", respErr, " req = ", req)
+				log.Info("All()")
+				for _, call := range calls.All() {
+					log.Info(call.MethodName)
+				}
+				log.Info("Filter()")
+				for _, call := range calls.Filter(pb.ProductCatalogServiceServer.GetProduct) {
+					log.Info(call.MethodName)
+				}
 				return nil
 			},
 		},
 	}
 
-	serverContract = ServerContract{
-		UnaryRPCContracts: []UnaryRPCContract{rpcContract},
-		Logger:            log,
-	}
+	serverContract = NewServerContract(log)
+	serverContract.RegisterUnaryRPCContract(rpcContract)
 
 	var srv *grpc.Server
 	if os.Getenv("DISABLE_STATS") == "" {
