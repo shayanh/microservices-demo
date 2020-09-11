@@ -83,11 +83,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:dc9cf8a29e029fe3c3140fba240257e49a71cd2c71871bec3c5d67f145fae1c7"
+  digest = "1:3872c85182c21e978657f4ac49aa889d1936ce3893d75aaf5913dcffe8434977"
   name = "github.com/shayanh/grpc-go-contracts"
-  packages = ["."]
+  packages = ["contracts"]
   pruneopts = "UT"
-  revision = "62ba79b4889798bac082b79947ef3beb7d4648ba"
+  revision = "d99513230b7e6471b4a4a13fd259cdde44067cbe"
 
 [[projects]]
   digest = "1:04457f9f6f3ffc5fea48e71d62f2ca256637dee0a04d710288e27e05c8b41976"
@@ -328,7 +328,7 @@
     "contrib.go.opencensus.io/exporter/stackdriver",
     "github.com/golang/protobuf/proto",
     "github.com/google/uuid",
-    "github.com/shayanh/grpc-go-contracts",
+    "github.com/shayanh/grpc-go-contracts/contracts",
     "github.com/sirupsen/logrus",
     "go.opencensus.io/plugin/ocgrpc",
     "go.opencensus.io/stats/view",

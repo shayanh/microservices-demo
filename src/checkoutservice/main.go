@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"regexp"
 	"time"
 
 	"cloud.google.com/go/profiler"
@@ -34,7 +35,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	contracts "github.com/shayanh/grpc-go-contracts"
+	"github.com/shayanh/grpc-go-contracts/contracts"
 
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/genproto"
 	money "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/money"
@@ -111,6 +112,28 @@ func main() {
 	rpcContract := &contracts.UnaryRPCContract{
 		Method: pb.CheckoutServiceServer.PlaceOrder,
 		PreConditions: []contracts.Condition{
+			// Email must be valid
+			func(req *pb.PlaceOrderRequest) error {
+				var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+				e := req.Email
+				if len(e) < 3 && len(e) > 254 {
+					return errors.New("email address is not valid")
+				}
+				if !emailRegex.MatchString(e) {
+					return errors.New("email address is not valid")
+				}
+				return nil
+			},
+			// CreditCard number must be valid
+			func(req *pb.PlaceOrderRequest) error {
+				var creditCardNumberRegex = regexp.MustCompile("d{4}-d{4}-d{4}-d{4}")
+				n := req.CreditCard.GetCreditCardNumber()
+				if !creditCardNumberRegex.MatchString(n) {
+					return errors.New("credit card number is not valid")
+				}
+				return nil
+			},
+			// CreditCard expiration date must be valid
 			func(req *pb.PlaceOrderRequest) error {
 				if req.GetCreditCard() == nil {
 					return errors.New("credit card cannot be nil")
@@ -145,6 +168,36 @@ func main() {
 				shippingCall := shippingCalls[0]
 				if shippingCall.Error != nil || shippingCall.Response.(*pb.ShipOrderResponse).GetTrackingId() == "" {
 					return errors.New("invalid response from shipping service")
+				}
+				return nil
+			},
+			func(resp *pb.PlaceOrderResponse, respErr error, req *pb.PlaceOrderRequest, calls contracts.RPCCallHistory) error {
+				if respErr != nil {
+					return nil
+				}
+				paymentCalls := calls.Filter(pb.PaymentServiceServer.Charge)
+				if len(paymentCalls) < 1 {
+					return errors.New("no call to payment service")
+				}
+				paymentCall := paymentCalls[0]
+				if paymentCall.Error != nil || paymentCall.Response.(*pb.ChargeResponse).GetTransactionId() == "" {
+					return errors.New("invalid response from payment service")
+				}
+				return nil
+			},
+			func(resp *pb.PlaceOrderResponse, respErr error, req *pb.PlaceOrderRequest, calls contracts.RPCCallHistory) error {
+				if respErr != nil {
+					return nil
+				}
+				shippingCalls := calls.Filter(pb.ShippingServiceClient.ShipOrder)
+				paymentCalls := calls.Filter(pb.PaymentServiceServer.Charge)
+				if len(paymentCalls) < 1 || len(shippingCalls) < 1 {
+					return errors.New("no call to payment or shipping service")
+				}
+				paymentCall := paymentCalls[0]
+				shippingCall := shippingCalls[0]
+				if paymentCall.Order > shippingCall.Order {
+					return errors.New("payment must called before shipping")
 				}
 				return nil
 			},
