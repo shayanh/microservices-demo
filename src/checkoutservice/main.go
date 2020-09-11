@@ -126,7 +126,7 @@ func main() {
 			},
 			// CreditCard number must be valid
 			func(req *pb.PlaceOrderRequest) error {
-				var creditCardNumberRegex = regexp.MustCompile("d{4}-d{4}-d{4}-d{4}")
+				var creditCardNumberRegex = regexp.MustCompile("\\d{4}-\\d{4}-\\d{4}-\\d{4}")
 				n := req.CreditCard.GetCreditCardNumber()
 				if !creditCardNumberRegex.MatchString(n) {
 					return errors.New("credit card number is not valid")
