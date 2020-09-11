@@ -9,7 +9,7 @@
     "internal/version",
     "monitoring/apiv3",
     "profiler",
-    "trace/apiv2"
+    "trace/apiv2",
   ]
   pruneopts = "UT"
   revision = "457ea5c15ccf3b87db582c450e80101989da35f7"
@@ -32,15 +32,6 @@
   version = "v0.5.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:a85b0dc359de4812d383ee6670f0dae595cfcb8b13ff6b872bdb013a18c37b07"
-  name = "git.apache.org/thrift.git"
-  packages = ["lib/go/thrift"]
-  pruneopts = "UT"
-  revision = "286eee16b147a302ddc7b10740c5e5401ebbec17"
-  source = "github.com/apache/thrift"
-
-[[projects]]
   digest = "1:1d3ad0f6a57c08e2168089a64c34313930571fcbe5359d71c608a97ce504f7ca"
   name = "github.com/golang/protobuf"
   packages = [
@@ -52,7 +43,7 @@
     "ptypes/empty",
     "ptypes/struct",
     "ptypes/timestamp",
-    "ptypes/wrappers"
+    "ptypes/wrappers",
   ]
   pruneopts = "UT"
   revision = "b5d812f8a3706043e23a9cd5babf2e5423744d30"
@@ -83,6 +74,14 @@
   version = "v1.0.2"
 
 [[projects]]
+  branch = "master"
+  digest = "1:3872c85182c21e978657f4ac49aa889d1936ce3893d75aaf5913dcffe8434977"
+  name = "github.com/shayanh/grpc-go-contracts"
+  packages = ["contracts"]
+  pruneopts = "UT"
+  revision = "d99513230b7e6471b4a4a13fd259cdde44067cbe"
+
+[[projects]]
   digest = "1:04457f9f6f3ffc5fea48e71d62f2ca256637dee0a04d710288e27e05c8b41976"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
@@ -97,19 +96,17 @@
     "thrift",
     "thrift-gen/agent",
     "thrift-gen/jaeger",
-    "thrift-gen/zipkincore"
+    "thrift-gen/zipkincore",
   ]
   pruneopts = "UT"
   revision = "f2e1f58485aacf2975cdde9c9f5396e6d98c35ba"
   version = "v2.21.1"
 
 [[projects]]
-  digest = "1:a5154dfd6b37bef5a3eab759e13296348e639dc8c7604f538368167782b08ccd"
+  digest = "1:1bb914cfb78f68f488a91cd7872d3d06a5f83c5bbacf0296dbef44e120b00a91"
   name = "go.opencensus.io"
   packages = [
     ".",
-    "exporter/jaeger",
-    "exporter/jaeger/internal/gen-go/jaeger",
     "internal",
     "internal/tagencoding",
     "plugin/ocgrpc",
@@ -122,7 +119,7 @@
     "trace",
     "trace/internal",
     "trace/propagation",
-    "trace/tracestate"
+    "trace/tracestate",
   ]
   pruneopts = "UT"
   revision = "b11f239c032624b045c4c2bfd3d1287b4012ce89"
@@ -140,7 +137,7 @@
     "http2/hpack",
     "idna",
     "internal/timeseries",
-    "trace"
+    "trace",
   ]
   pruneopts = "UT"
   revision = "da137c7871d730100384dbcf36e6f8fa493aef5b"
@@ -154,7 +151,7 @@
     "google",
     "internal",
     "jws",
-    "jwt"
+    "jwt",
   ]
   pruneopts = "UT"
   revision = "0f29369cfe4552d0e4bcddc57cc75f4d7e672a33"
@@ -194,7 +191,7 @@
     "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
-    "unicode/rangetable"
+    "unicode/rangetable",
   ]
   pruneopts = "UT"
   revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
@@ -213,7 +210,7 @@
     "transport",
     "transport/grpc",
     "transport/http",
-    "transport/http/internal/propagation"
+    "transport/http/internal/propagation",
   ]
   pruneopts = "UT"
   revision = "aae1d1b89c27132abe4fa22731a2a61e7089079c"
@@ -233,7 +230,7 @@
     "internal/socket",
     "internal/urlfetch",
     "socket",
-    "urlfetch"
+    "urlfetch",
   ]
   pruneopts = "UT"
   revision = "b2f4a3cf3c67576a2ee09e1fe62656a5086ce880"
@@ -255,7 +252,7 @@
     "googleapis/monitoring/v3",
     "googleapis/rpc/errdetails",
     "googleapis/rpc/status",
-    "protobuf/field_mask"
+    "protobuf/field_mask",
   ]
   pruneopts = "UT"
   revision = "3bdd9d9f5532d75d09efb230bd767d265245cfe5"
@@ -310,7 +307,7 @@
     "serviceconfig",
     "stats",
     "status",
-    "tap"
+    "tap",
   ]
   pruneopts = "UT"
   revision = "1d89a3c832915b2314551c1d2a506874d62e53f7"
@@ -324,8 +321,8 @@
     "contrib.go.opencensus.io/exporter/jaeger",
     "contrib.go.opencensus.io/exporter/stackdriver",
     "github.com/golang/protobuf/proto",
+    "github.com/shayanh/grpc-go-contracts/contracts",
     "github.com/sirupsen/logrus",
-    "go.opencensus.io/exporter/jaeger",
     "go.opencensus.io/plugin/ocgrpc",
     "go.opencensus.io/stats/view",
     "go.opencensus.io/trace",
@@ -334,7 +331,7 @@
     "google.golang.org/grpc/codes",
     "google.golang.org/grpc/health/grpc_health_v1",
     "google.golang.org/grpc/reflection",
-    "google.golang.org/grpc/status"
+    "google.golang.org/grpc/status",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

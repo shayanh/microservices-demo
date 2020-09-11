@@ -15,6 +15,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -23,6 +24,7 @@ import (
 	"cloud.google.com/go/profiler"
 	"contrib.go.opencensus.io/exporter/jaeger"
 	"contrib.go.opencensus.io/exporter/stackdriver"
+	"github.com/shayanh/grpc-go-contracts/contracts"
 	"github.com/sirupsen/logrus"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
@@ -57,6 +59,80 @@ func init() {
 	log.Out = os.Stdout
 }
 
+var serverContract *contracts.ServerContract
+
+func createContracts() {
+	serverContract = contracts.NewServerContract(log)
+
+	getQuoteContract := &contracts.UnaryRPCContract{
+		Method: pb.ShippingServiceServer.GetQuote,
+		PreConditions: []contracts.Condition{
+			func(req *pb.GetQuoteRequest) error {
+				for _, item := range req.GetItems() {
+					if item.GetQuantity() < 0 {
+						return errors.New("Item quantiry must be positive")
+					}
+				}
+				return nil
+			},
+		},
+		PostConditions: []contracts.Condition{
+			func(resp *pb.GetQuoteResponse, respErr error, req *pb.GetQuoteRequest, calls contracts.RPCCallHistory) error {
+				if respErr != nil {
+					return nil
+				}
+				cnt := 0
+				for _, item := range req.GetItems() {
+					cnt += int(item.GetQuantity())
+				}
+				if cnt == 0 && (resp.GetCostUsd().GetUnits() != 0 || resp.GetCostUsd().GetNanos() != 0) {
+					return errors.New("cost must be zero when there is no item")
+				}
+				if cnt > 0 && (resp.GetCostUsd().GetUnits() == 0 && resp.GetCostUsd().GetNanos() == 0) {
+					return errors.New("cost cannot be zero when there is some items")
+				}
+				return nil
+			},
+			func(resp *pb.GetQuoteResponse, respErr error, req *pb.GetQuoteRequest, calls contracts.RPCCallHistory) error {
+				if respErr != nil {
+					return nil
+				}
+				if resp.GetCostUsd().GetCurrencyCode() != "USD" {
+					return errors.New("currency must be USD")
+				}
+				return nil
+			},
+		},
+	}
+	shipOrderContract := &contracts.UnaryRPCContract{
+		Method: pb.ShippingServiceServer.ShipOrder,
+		PreConditions: []contracts.Condition{
+			func(req *pb.ShipOrderRequest) error {
+				for _, item := range req.GetItems() {
+					if item.GetQuantity() < 0 {
+						return errors.New("Item quantiry must be positive")
+					}
+				}
+				return nil
+			},
+		},
+		PostConditions: []contracts.Condition{
+			func(resp *pb.ShipOrderResponse, respErr error, req *pb.ShipOrderRequest, calls contracts.RPCCallHistory) error {
+				if respErr != nil {
+					return nil
+				}
+				if resp.GetTrackingId() == "" {
+					return errors.New("tracking id cannot be nil")
+				}
+				return nil
+			},
+		},
+	}
+
+	serverContract.RegisterUnaryRPCContract(getQuoteContract)
+	serverContract.RegisterUnaryRPCContract(shipOrderContract)
+}
+
 func main() {
 	if os.Getenv("DISABLE_TRACING") == "" {
 		log.Info("Tracing enabled.")
@@ -83,10 +159,12 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	createContracts()
+
 	var srv *grpc.Server
 	if os.Getenv("DISABLE_STATS") == "" {
 		log.Info("Stats enabled.")
-		srv = grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}))
+		srv = grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}), grpc.UnaryInterceptor(serverContract.UnaryServerInterceptor()))
 	} else {
 		log.Info("Stats disabled.")
 		srv = grpc.NewServer()
