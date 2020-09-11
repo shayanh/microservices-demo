@@ -17,6 +17,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -29,6 +30,7 @@ import (
 	"time"
 
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/productcatalogservice/genproto"
+	"github.com/shayanh/grpc-go-contracts/contracts"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	"cloud.google.com/go/profiler"
@@ -36,6 +38,7 @@ import (
 	"contrib.go.opencensus.io/exporter/stackdriver"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/sirupsen/logrus"
+
 	//  "go.opencensus.io/exporter/jaeger"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
@@ -123,8 +126,41 @@ func main() {
 		port = os.Getenv("PORT")
 	}
 	log.Infof("starting grpc server at :%s", port)
+	createContracts()
 	run(port)
 	select {}
+}
+
+var serverContract *contracts.ServerContract
+
+func createContracts() {
+	serverContract = contracts.NewServerContract(log)
+	listProductsContract := &contracts.UnaryRPCContract{
+		Method:        pb.ProductCatalogServiceServer.ListProducts,
+		PreConditions: []contracts.Condition{},
+		PostConditions: []contracts.Condition{
+			func(resp *pb.ListProductsResponse, respErr error, req *pb.Empty, calls contracts.RPCCallHistory) error {
+				return respErr
+			},
+		},
+	}
+	getProductContract := &contracts.UnaryRPCContract{
+		Method:        pb.ProductCatalogServiceServer.GetProduct,
+		PreConditions: []contracts.Condition{},
+		PostConditions: []contracts.Condition{
+			func(resp *pb.Product, respErr error, req *pb.GetProductRequest, calls contracts.RPCCallHistory) error {
+				if respErr != nil {
+					return nil
+				}
+				if resp.GetId() != req.GetId() {
+					return errors.New("request and response id must be equal")
+				}
+				return nil
+			},
+		},
+	}
+	serverContract.RegisterUnaryRPCContract(listProductsContract)
+	serverContract.RegisterUnaryRPCContract(getProductContract)
 }
 
 func run(port string) string {
@@ -135,7 +171,7 @@ func run(port string) string {
 	var srv *grpc.Server
 	if os.Getenv("DISABLE_STATS") == "" {
 		log.Info("Stats enabled.")
-		srv = grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}))
+		srv = grpc.NewServer(grpc.StatsHandler(&ocgrpc.ServerHandler{}), grpc.UnaryInterceptor(serverContract.UnaryServerInterceptor()))
 	} else {
 		log.Info("Stats disabled.")
 		srv = grpc.NewServer()
