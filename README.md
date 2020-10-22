@@ -87,7 +87,7 @@ We offer the following installation methods:
      Recommended for Mac/Windows.
    - [Kind](https://kind.sigs.k8s.io). Supports Mac/Windows/Linux.
 
-1. **Running on Google Kubernetes Engine (GKE)”** (~30 minutes) You will build,
+1. **Running on Google Kubernetes Engine (GKE)** (~30 minutes) You will build,
    upload and deploy the container images to a Kubernetes cluster on Google
    Cloud.
 
@@ -218,12 +218,6 @@ We offer the following installation methods:
     browser to confirm installation.
 
         kubectl get service frontend-external
-
-    **Troubleshooting:** A Kubernetes bug (will be fixed in 1.12) combined with
-    a Skaffold [bug](https://github.com/GoogleContainerTools/skaffold/issues/887)
-    causes load balancer to not to work even after getting an IP address. If you
-    are seeing this, run `kubectl get service frontend-external -o=yaml | kubectl apply -f-`
-    to trigger load balancer reconfiguration.
 
 ### Option 3: Using Pre-Built Container Images
 
